@@ -9,10 +9,9 @@
 **for start after clone project in your system run this commends in root project**
 
  1. npm install package.json
- 2. node ace make:migration user
- 3. node ace make:migration task
- 4. node ace db:seed -i       (database/seeders/User)
- 5. node ace db:seed -i       (database/seeders/Task)
+ 2. node ace migration:run
+ 3. node ace db:seed -i       (database/seeders/User)
+ 4. node ace db:seed -i       (database/seeders/Task)
 
  
 **end point's:**

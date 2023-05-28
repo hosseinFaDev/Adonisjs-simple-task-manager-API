@@ -5,7 +5,7 @@ import User from "App/Models/User"
 export default class AdminsController {
 
     public async usersList({ request, response }: HttpContextContract) {
-        const queryString = request.qs()
+        const queryString: Record<string, any> = request.qs()
 
         //search by email you need to use {searchByEmail=} in your query
         const searchByEmail: string = queryString.searchByEmail
@@ -22,11 +22,11 @@ export default class AdminsController {
         }
 
         //sorting by desc or asc by query string
-        const sort = queryString.sort == "desc" || undefined ? "desc" as "desc" : "asc" as "asc"
+        const sort: "desc" | "asc" = queryString.sort == "desc" || undefined ? "desc" as "desc" : "asc" as "asc"
 
         //pagination
-        const page = queryString.page || 1
-        const perPage = 3
+        const page: any = queryString.page || 1
+        const perPage: number = 3
         const allUsers = await User.query().where('id', '>', 0).orderBy('id', sort).paginate(page, perPage)
 
         //add dynamid path for download profilePic
@@ -87,7 +87,7 @@ export default class AdminsController {
         })
 
         //upload files and validation
-        let fileName
+        let fileName: string | undefined
         if (profilePic) {
             await profilePic.moveToDisk('./profilePic')
             fileName = profilePic.fileName;
@@ -121,19 +121,23 @@ export default class AdminsController {
                 rules.minLength(6)
             ]),
             email: schema.string([
-                rules.email()
+                rules.email(),
+                rules.exists({
+                    table: 'users', column: 'email'
+                })
             ]),
             profilePic: schema.file({
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
-            })
+            }),
+
         })
         await request.validate({ schema: validateSchema })
         const selectedAccount = await User.findBy('email', email)
 
 
         //upload files and validation
-        let fileName
+        let fileName: string | undefined
         if (profilePic) {
             await profilePic.moveToDisk('./profilePic')
             fileName = profilePic.fileName;

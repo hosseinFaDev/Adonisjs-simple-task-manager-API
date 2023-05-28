@@ -46,7 +46,7 @@ export default class TasksController {
 
             //upload files
             const taskFiles = request.file('taskFiles')
-            let fileName
+            let fileName : string | undefined
             if (taskFiles) {
                 await taskFiles.moveToDisk('./taskFiles')
                 fileName = taskFiles.fileName;
@@ -89,7 +89,7 @@ export default class TasksController {
 
             //upload files
             const taskFiles = request.file('taskFiles')
-            let fileName
+            let fileName : string | undefined
             if (taskFiles) {
                 await taskFiles.moveToDisk('./taskFiles')
                 fileName = taskFiles.fileName;
