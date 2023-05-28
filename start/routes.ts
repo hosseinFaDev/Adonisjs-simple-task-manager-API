@@ -22,24 +22,29 @@ import Route from '@ioc:Adonis/Core/Route'
 import { env } from 'process'
 
 Route.get('/', async () => {
-  return { 'hello,you neet to register with post requset and enter this informations in requestBody (name,lastName,email,password), please go to ===>':`${env.HOST}:${env.PORT}/register`}
+  return { 'hello,you neet to register with post requset and enter this informations in requestBody (name,lastName,email,password), please go to ===>': `${env.HOST}:${env.PORT}/register` }
 })
 
-//auth route
-Route.post('/apt/v1/register','AuthController.register')
-Route.post('/apt/v1/loggin','AuthController.loggin')
 
-//admin route
-Route.get('/apt/v1/admin/usersList','AdminsController.usersList').middleware('IsAdmin')
-Route.post('/apt/v1/admin/create','AdminsController.create').middleware('IsAdmin')
-Route.patch('/apt/v1/admin/edit','AdminsController.edit').middleware('IsAdmin')
-Route.delete('/apt/v1/admin/delete','AdminsController.delete').middleware('IsAdmin')
+Route.group(() => {
 
-//user route
-Route.get('/apt/v1/users/tasks','TasksController.getTasks')
-Route.post('/apt/v1/users/tasks/create','TasksController.createTasks')
-Route.patch('/apt/v1/users/tasks/edit','TasksController.editTasks')
-Route.delete('/apt/v1/users/tasks','TasksController.deleteTasks')
+  //auth route
+  Route.post('/register', 'AuthController.register')
+  Route.post('/loggin', 'AuthController.loggin')
+
+  //admin route
+  Route.get('/admin/usersList', 'AdminsController.usersList').middleware('IsAdmin')
+  Route.post('/admin/create', 'AdminsController.create').middleware('IsAdmin')
+  Route.patch('/admin/edit', 'AdminsController.edit').middleware('IsAdmin')
+  Route.delete('/admin/delete', 'AdminsController.delete').middleware('IsAdmin')
+
+  //user route
+  Route.get('/users/tasks', 'TasksController.getTasks')
+  Route.post('/users/tasks/create', 'TasksController.createTasks')
+  Route.patch('/users/tasks/edit', 'TasksController.editTasks')
+  Route.delete('/users/tasks', 'TasksController.deleteTasks')
+
+}).prefix('/apt/v1')
 
 //download route
-Route.get('/download/:params','DownloadsController.getProfilePic')
+Route.get('/download/:params', 'DownloadsController.getProfilePic')
