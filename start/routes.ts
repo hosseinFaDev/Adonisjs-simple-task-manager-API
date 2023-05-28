@@ -33,6 +33,7 @@ Route.group(() => {
   Route.post('/loggin', 'AuthController.loggin')
 
   //admin route
+  
   Route.get('/admin/usersList', 'AdminsController.usersList').middleware('IsAdmin')
   Route.post('/admin/create', 'AdminsController.create').middleware('IsAdmin')
   Route.patch('/admin/edit', 'AdminsController.edit').middleware('IsAdmin')

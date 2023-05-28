@@ -1,4 +1,4 @@
-// import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import Task from "App/Models/Task";
 import User from "App/Models/User";
@@ -15,7 +15,7 @@ enum priorityList {
 export default class TasksController {
 
 
-    public async getTasks({ request, response }) {
+    public async getTasks({ request, response }: HttpContextContract) {
         const authorizationToken = request.header('authorization')
 
 
@@ -31,11 +31,11 @@ export default class TasksController {
 
             return response.status(200).send(allUserTasks)
         }
-        return response.status(403).send("set your authorization token please")
+        return response.status(403).json({ "message": "set your authorization token please" })
     }
 
 
-    public async createTasks({ request, response }) {
+    public async createTasks({ request, response }: HttpContextContract) {
         const authorizationToken = request.header('authorization')
 
         if (checkToken.verify(authorizationToken)) {
@@ -71,13 +71,13 @@ export default class TasksController {
                 task_files: fileName,
                 user_id: userid,
             })
-            return response.status(201).send('task created successfully')
+            return response.status(201).json({ "message": "task created successfully" })
         }
-        return response.status(403).send("set your authorization token please")
+        return response.status(403).json({ "message": "set your authorization token please" })
     }
 
 
-    public async editTasks({ request, response }) {
+    public async editTasks({ request, response }: HttpContextContract) {
         const authorizationToken = request.header('authorization')
 
         //extracting own id and email form user token
@@ -86,18 +86,6 @@ export default class TasksController {
             const decodedEmail = checkToken.decoded(authorizationToken)
             const userData = await User.findBy('email', decodedEmail)
             const userid = userData?.$attributes.id
-
-
-            //validation for changing own tasks with userId
-            const correntCommentUser = await Task.query().where('id', id)
-            try {
-                const correntCommentUserId = correntCommentUser[0].$attributes.user_id
-                if (!(userid == correntCommentUserId)) {
-                    return response.status(403).send(`task with id ${id} is not your task, recheck task id please`)
-                }
-            } catch {
-                return response.status(404).send(`task with id ${id} not been found !!!, recheck task id please`)
-            }
 
             //upload files
             const taskFiles = request.file('taskFiles')
@@ -109,6 +97,7 @@ export default class TasksController {
 
             //validation for inputs data
             const validateSchema = schema.create({
+                id: schema.number(),
                 name: schema.string([
                     rules.minLength(3)
                 ]),
@@ -118,25 +107,39 @@ export default class TasksController {
 
             })
             await request.validate({ schema: validateSchema })
+
+            
+            //validation for changing own tasks with userId
+            const correntCommentUser = await Task.query().where('id', id)
+            try {
+                const correntCommentUserId = correntCommentUser[0].$attributes.user_id
+                if (!(userid == correntCommentUserId)) {
+                    return response.status(403).json({ "message": `task with id ${id} is not your task, recheck task id please` })
+                }
+            } catch {
+                return response.status(404).json({ "message": `task with id ${id} not been found !!!, recheck task id please` })
+            }
+
+
             await Task.query().where('id', id).update({
                 name,
                 content,
                 priority,
                 task_files: fileName,
             })
-            return response.status(201).send('task edited successfully')
+            return response.status(201).json({ "message": "task edited successfully" })
 
         }
-        return response.status(403).send("set your authorization token please")
+        return response.status(403).json({ "message": "set your authorization token please" })
     }
 
 
-    public async deleteTasks({ request, response }) {
+    public async deleteTasks({ request, response }: HttpContextContract) {
         const authorizationToken = request.header('authorization')
 
         if (checkToken.verify(authorizationToken)) {
             const { id } = request.body()
-            if (!id) return response.status(400).send('fill task id please and try again')
+            if (!id) return response.status(400).json({ "message": "fill task id please and try again" })
             const decodedEmail = checkToken.decoded(authorizationToken)
             const userData = await User.findBy('email', decodedEmail)
             const userid = userData?.$attributes.id
@@ -147,16 +150,16 @@ export default class TasksController {
             try {
                 const correntCommentUserId = correntCommentUser[0].$attributes.user_id
                 if (!(userid == correntCommentUserId)) {
-                    return response.status(403).send(`task with id ${id} is not your task, recheck task id please`)
+                    return response.status(403).json({ "message": `task with id ${id} is not your task, recheck task id please` })
                 }
             } catch {
-                return response.status(404).send(`task with id ${id} not been found !!! recheck task id please`)
+                return response.status(404).json({ "message": `task with id ${id} not been found !!! recheck task id please` })
             }
 
             await Task.query().where('id', id).delete()
-            return response.status(201).send('task deleted successfully')
+            return response.status(201).json({ "message": "task deleted successfully" })
 
         }
-        return response.status(401).send("set your authorization token please")
+        return response.status(401).json({ "message": "set your authorization token please" })
     }
 }

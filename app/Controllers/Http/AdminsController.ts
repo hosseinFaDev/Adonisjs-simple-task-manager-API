@@ -1,10 +1,10 @@
-// import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import User from "App/Models/User"
 export default class AdminsController {
 
-    public async usersList({ request, response }) {
+    public async usersList({ request, response }: HttpContextContract) {
         const queryString = request.qs()
 
         //search by email you need to use {searchByEmail=} in your query
@@ -40,37 +40,32 @@ export default class AdminsController {
     }
 
     //create new account
-    public async create({ request, response }) {
+    public async create({ request, response }: HttpContextContract) {
         const { name, lastName, email, password } = request.body()
+        const profilePic = request.file('profilePic')
 
-        //upload files and validation
-        const profilePic = request.file('profilePic', {
-            size: '2mb',
-            extnames: ['jpg', 'png', 'gif'],
-        })
-        let fileName
-        if (profilePic) {
-            await profilePic.moveToDisk('./profilePic')
-            fileName = profilePic.fileName;
-        }
-        if (!profilePic.isValid) {
-            return profilePic.errors
-        }
 
         //Validation in two different ways
 
         //firt one
 
         // switch (true) {
-        //     case name == null: return response.status(400).send("name is empty")
+        //     case name == null: return response.status(400).json("name is empty")
         //         break;
-        //     case lastName == null: return response.status(400).send("lastName is empty")
+        //     case lastName == null: return response.status(400).json("lastName is empty")
         //         break;
-        //     case email == null: return response.status(400).send("email is empty")
+        //     case email == null: return response.status(400).json("email is empty")
         //         break;
-        //     case password == null: return response.status(400).send("password is empty")
+        //     case password == null: return response.status(400).json("password is empty")
         //         break;
         // }
+
+        // const repetitive_email = await User.findBy('email', email)
+
+        // if (repetitive_email) {
+        //     return response.status(400).send('this email has been register brfore')
+        // }
+
 
         //second one
         const validateSchema = schema.create({
@@ -82,24 +77,23 @@ export default class AdminsController {
                 rules.minLength(6)
             ]),
             email: schema.string([
-                rules.email()
+                rules.email(),
+                rules.unique({ table: 'users', column: 'email' }),
             ]),
-
-
+            profilePic: schema.file({
+                size: '2mb',
+                extnames: ['jpg', 'gif', 'png'],
+            })
         })
-        await request.validate({ schema: validateSchema })
 
-
-
-        const repetitive_email = await User.findBy('email', email)
-
-        if (repetitive_email) {
-            return response.status(400).send('this email has been register brfore')
+        //upload files and validation
+        let fileName
+        if (profilePic) {
+            await profilePic.moveToDisk('./profilePic')
+            fileName = profilePic.fileName;
         }
 
-
-
-
+        await request.validate({ schema: validateSchema })
         await User.create({
             name,
             last_name: lastName,
@@ -107,31 +101,42 @@ export default class AdminsController {
             password,
             profile_pic: fileName
         })
-        response.status(201).send('account has been created successfully')
+        response.status(201).json({ "message": "account has been created successfully" })
 
     }
 
+
+
     // edit account
-    public async edit({ request, response }) {
-        const { name, lastName, email, password, role = 0 } = request.body()
+    public async edit({ request, response }: HttpContextContract) {
+        const { name, lastName, password, email, role = 0 } = request.body()
+        const profilePic = request.file('profilePic')
+
+        const validateSchema = schema.create({
+            name: schema.string([
+                rules.minLength(3)
+            ]),
+            lastName: schema.string(),
+            password: schema.string([
+                rules.minLength(6)
+            ]),
+            email: schema.string([
+                rules.email()
+            ]),
+            profilePic: schema.file({
+                size: '2mb',
+                extnames: ['jpg', 'gif', 'png'],
+            })
+        })
+        await request.validate({ schema: validateSchema })
         const selectedAccount = await User.findBy('email', email)
 
-        if (!selectedAccount) {
-            return response.status(401).send('this email has not been found check your email please')
-        }
 
         //upload files and validation
-        const profilePic = request.file('profilePic', {
-            size: '2mb',
-            extnames: ['jpg', 'png', 'gif'],
-        })
         let fileName
         if (profilePic) {
             await profilePic.moveToDisk('./profilePic')
             fileName = profilePic.fileName;
-        }
-        if (!profilePic.isValid) {
-            return profilePic.errors
         }
 
 
@@ -150,17 +155,22 @@ export default class AdminsController {
             profile_pic: fileName,
             role,
         })
-        response.status(201).send('account info has been edited successfully')
+        response.status(201).json({ "message": "account info has been edited successfully" })
 
     }
 
-    public async delete({ request, response }) {
+    public async delete({ request, response }: HttpContextContract) {
         const { email } = request.body();
-        if (!email) return response.status(404).send('please enter your email in form-data')
+        const validateSchema = schema.create({
+            email: schema.string([
+                rules.email()
+            ])
+        })
+        await request.validate({ schema: validateSchema })
         const findEmail = await User.findBy('email', email)
-        if(!findEmail) return response.status(404).send('user with this email doen\'t exsist')
+        if (!findEmail) return response.status(404).json({ "message": "user with this email doen't exsist" })
         await User.query().where('email', email).delete();
-        response.status(201).send('user has been deleted successfully')
+        response.status(201).json({ "message": "user has been deleted successfully" })
 
     }
 
