@@ -19,19 +19,15 @@ export default class AuthController {
             rules.minLength(6)
          ]),
          email: schema.string([
-            rules.email()
+            rules.email(),
+            rules.unique({
+               table: 'users', column: 'email'
+            })
          ]),
 
       })
       await request.validate({ schema: validateSchema })
-
-      //validation for repetitive email
-      const repetitive_email = await User.findBy('email', email)
-
-      if (repetitive_email) {
-         return response.status(400).json({ "message": "your email has been register brfore" })
-      }
-
+     
       await User.create({
          name,
          last_name: lastName,
