@@ -47,23 +47,23 @@ export default class AdminsController {
 
         //Validation in two different ways
 
-        //firt one
+        //firt one is normal validation
 
         // switch (true) {
-        //     case name == null: return response.status(400).json("name is empty")
+        //     case name == null: return response.status(400).json({ "message": "name is empty"})
         //         break;
-        //     case lastName == null: return response.status(400).json("lastName is empty")
+        //     case lastName == null: return response.status(400).json({ "message": "lastName is empty"})
         //         break;
-        //     case email == null: return response.status(400).json("email is empty")
+        //     case email == null: return response.status(400).json({ "message": "email is empty"})
         //         break;
-        //     case password == null: return response.status(400).json("password is empty")
+        //     case password == null: return response.status(400).json({ "message": "password is empty"})
         //         break;
         // }
 
         // const repetitive_email = await User.findBy('email', email)
 
         // if (repetitive_email) {
-        //     return response.status(400).send('this email has been register brfore')
+        //     return response.status(400).json({ "message": "this email has been register brfore"})
         // }
 
 
