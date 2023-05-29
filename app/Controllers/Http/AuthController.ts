@@ -49,7 +49,10 @@ export default class AuthController {
             rules.minLength(6)
          ]),
          email: schema.string([
-            rules.email()
+            rules.email(),
+            rules.exists({
+               table: 'users', column: 'email'
+           })
          ]),
 
       })
@@ -63,9 +66,6 @@ export default class AuthController {
 
       const generated: string = tokenGenrator.sign(email)
 
-      if (!registerEmail) {
-         ('your email has not been register brfore')
-      }
 
       if (generated) {
          return response.status(201).json({ "message": `this is your token ,please set it on your authorization header : bearer ${generated}` })
