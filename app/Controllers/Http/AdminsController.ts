@@ -1,5 +1,5 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-
+import Hash from '@ioc:Adonis/Core/Hash'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import User from "App/Models/User"
 export default class AdminsController {
@@ -94,11 +94,12 @@ export default class AdminsController {
         }
 
         await request.validate({ schema: validateSchema })
+        const hashedPassword = await Hash.make(password)
         await User.create({
             name,
             last_name: lastName,
             email,
-            password,
+            password:hashedPassword,
             profile_pic: fileName
         })
         response.status(201).json({ "message": "account has been created successfully" })
@@ -134,6 +135,7 @@ export default class AdminsController {
         })
         await request.validate({ schema: validateSchema })
         const selectedAccount = await User.findBy('email', email)
+        const hashedPassword = await Hash.make(password)
 
 
         //upload files and validation
@@ -155,7 +157,7 @@ export default class AdminsController {
             name,
             last_name: lastName,
             email,
-            password,
+            password:hashedPassword,
             profile_pic: fileName,
             role,
         })

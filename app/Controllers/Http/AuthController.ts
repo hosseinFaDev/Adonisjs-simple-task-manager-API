@@ -1,5 +1,5 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-
+import Hash from '@ioc:Adonis/Core/Hash'
 import User from "App/Models/User"
 import token from "App/services/token"
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
@@ -8,6 +8,7 @@ import { schema, rules } from '@ioc:Adonis/Core/Validator'
 export default class AuthController {
    public async register({ request, response }: HttpContextContract) {
       const { name, lastName, email, password } = request.body()
+      const hashedPassword = await Hash.make(password)
 
       //validation for inputs data
       const validateSchema = schema.create({
@@ -27,12 +28,12 @@ export default class AuthController {
 
       })
       await request.validate({ schema: validateSchema })
-     
+
       await User.create({
          name,
          last_name: lastName,
          email,
-         password,
+         password: hashedPassword,
       })
       response.status(201).json({ "message": "your account has been created successfully" })
 
@@ -48,15 +49,16 @@ export default class AuthController {
             rules.email(),
             rules.exists({
                table: 'users', column: 'email'
-           })
+            })
          ]),
 
       })
       await request.validate({ schema: validateSchema })
       const registerEmail = await User.findBy('email', email)
       const realPassword = registerEmail?.$attributes.password
-      if (!(password == realPassword)) {
-         return response.status(401).json({ "message": "invalid password or empty in request body" })
+      const isValidPassword = await Hash.verify(realPassword, password)
+      if (!isValidPassword) {
+         return response.status(401).json({ "message": "invalid password !!!" })
       }
       const tokenGenrator = new token;
 
