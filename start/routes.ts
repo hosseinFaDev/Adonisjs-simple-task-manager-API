@@ -33,11 +33,12 @@ Route.group(() => {
   Route.post('/loggin', 'AuthController.loggin')
 
   //admin route
-  
-  Route.get('/admin/usersList', 'AdminsController.usersList').middleware('IsAdmin')
-  Route.post('/admin/create', 'AdminsController.create').middleware('IsAdmin')
-  Route.patch('/admin/edit', 'AdminsController.edit').middleware('IsAdmin')
-  Route.delete('/admin/delete', 'AdminsController.delete').middleware('IsAdmin')
+  Route.group(() => {
+    Route.get('/admin/usersList', 'AdminsController.usersList')
+    Route.post('/admin/create', 'AdminsController.create')
+    Route.patch('/admin/edit', 'AdminsController.edit')
+    Route.delete('/admin/delete', 'AdminsController.delete')
+  }).middleware('IsAdmin')
 
   //user route
   Route.get('/users/tasks', 'TasksController.getTasks')
