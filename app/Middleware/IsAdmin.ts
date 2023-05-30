@@ -14,7 +14,7 @@ export default class IsAdmin {
     , next: () => Promise<void>) {
 
     const authorizationToken = request.header('authorization')
-    if (!authorizationToken ) return response.status(403).send('access denied! enter your JWT token')
+    if (!authorizationToken ) return response.status(403).json({"message":"access denied! enter your JWT token"})
     if (checkToken.verify(authorizationToken)) {
       const decodedEmail = checkToken.decoded(authorizationToken)
       const userData = await User.findBy('email', decodedEmail)
@@ -25,7 +25,7 @@ export default class IsAdmin {
       }
 
     } 
-      return response.status(403).send('access denied!')
+            return response.status(403).json({"message":"access denied!"})
    
   }
 }
