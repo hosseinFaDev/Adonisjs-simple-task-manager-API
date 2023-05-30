@@ -24,10 +24,8 @@ export default class IsAdmin {
        return await next()
       }
 
-    } else {
+    } 
       return response.status(403).send('access denied!')
-    }
-
-    await next()
+   
   }
 }
