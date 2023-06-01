@@ -49,4 +49,5 @@ Route.group(() => {
 }).prefix('/apt/v1')
 
 //download route
-Route.get('/download/:params', 'DownloadsController.getProfilePic')
+Route.get('/download/profilepic/:params', 'DownloadsController.getProfilePic')
+Route.get('/download/taskfiles/:params', 'DownloadsController.getTaskFiles')

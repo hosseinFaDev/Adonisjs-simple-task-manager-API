@@ -44,17 +44,31 @@ export default class TasksController {
             const perPage: number = 10
             const page: string = request.qs().page || '1'
             if (queryString.taskName) {
-                const searchedTask: any = await Task.query().where('user_id', userid).where('name', `${queryString.taskName}`).orderBy('created_at',sort).paginate(Number(page), perPage)
+                const searchedTask: any = await Task.query().where('user_id', userid).where('name', `${queryString.taskName}`).orderBy('created_at', sort).paginate(Number(page), perPage)
+                //add dynamid path for download task files the //==> other way is create a functin for do this and stop repetitive code
+                searchedTask.map((task) => {
+                    const fileName: string = task.$attributes['task_files']
+                    const priorityNumber: number = task.$attributes['priority']
+                    task.$attributes['priority'] = priorityList[priorityNumber]
+                    task.$attributes['task_files'] = 'for download task files cilck here==>' + '/download/taskfiles/' + fileName
+                })
                 return response.status(200).send(searchedTask)
             }
 
+            const allUserTasks: any = await Task.query().where('user_id', userid).orderBy('created_at', sort).paginate(Number(page), perPage)
 
-
-            const allUserTasks: any = await Task.query().where('user_id', userid).orderBy('created_at',sort).paginate(Number(page), perPage)
-
-
+            //add dynamid path for download task files
+            allUserTasks.map((task) => {
+                const fileName: string = task.$attributes['task_files']
+                const priorityNumber: number = task.$attributes['priority']
+                task.$attributes['priority'] = priorityList[priorityNumber]
+                task.$attributes['task_files'] = 'for download task files cilck here==>' + '/download/taskfiles/' + fileName
+            })
             return response.status(200).send(allUserTasks)
+
+
         }
+
         return response.status(403).json({ "message": "set your authorization token please" })
     }
 
