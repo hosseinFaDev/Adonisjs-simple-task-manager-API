@@ -11,7 +11,7 @@ type AuthBodyContent = {
 }
 
 export default class AuthController {
-   public async register({ request, response }: HttpContextContract) {
+   public async register({ request, response }: HttpContextContract): Promise<void> {
       const body: AuthBodyContent = request.body()
 
       //validation for inputs data
@@ -44,7 +44,7 @@ export default class AuthController {
 
    }
 
-   public async loggin({ request, response }: HttpContextContract) {
+   public async loggin({ request, response }: HttpContextContract): Promise<void> {
       const body: AuthBodyContent = request.body();
       const validateSchema: any = schema.create({
          password: schema.string([

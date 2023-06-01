@@ -17,7 +17,7 @@ type AdminQueryStringParams = {
 }
 export default class AdminsController {
 
-    public async usersList({ request, response }: HttpContextContract) {
+    public async usersList({ request, response }: HttpContextContract): Promise<void> {
 
 
         const queryString: AdminQueryStringParams = request.qs()
@@ -55,7 +55,7 @@ export default class AdminsController {
     }
 
     //create new account
-    public async create({ request, response }: HttpContextContract) {
+    public async create({ request, response }: HttpContextContract): Promise<void> {
 
         const body: AdminBodyContent = request.body()
         const profilePic: any = request.file('profilePic')
@@ -129,7 +129,7 @@ export default class AdminsController {
 
 
     // edit account
-    public async edit({ request, response }: HttpContextContract) {
+    public async edit({ request, response }: HttpContextContract): Promise<void> {
 
         const body: AdminBodyContent = request.body()
         const profilePic: any = request.file('profilePic')
@@ -189,7 +189,7 @@ export default class AdminsController {
 
     }
 
-    public async delete({ request, response }: HttpContextContract) {
+    public async delete({ request, response }: HttpContextContract): Promise<void> {
 
         const body: Record<string, AdminBodyContent> = request.body();
         const validateSchema: any = schema.create({

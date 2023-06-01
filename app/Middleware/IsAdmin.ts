@@ -12,7 +12,7 @@ enum role {
 export default class IsAdmin {
   public async handle(
     { request, response }: HttpContextContract
-    , next: () => Promise<void>) {
+    , next: () => Promise<void>): Promise<void> {
 
     const authorizationToken: string | undefined = request.header('authorization')
     if (!authorizationToken) return response.status(403).json({ "message": "access denied! enter your JWT token" })

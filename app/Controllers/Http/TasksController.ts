@@ -23,7 +23,7 @@ type UserBodyContent = {
 export default class TasksController {
 
 
-    public async getTasks({ request, response }: HttpContextContract) {
+    public async getTasks({ request, response }: HttpContextContract): Promise<void> {
         const authorizationToken: string | undefined = request.header('authorization')
 
         if (checkToken.verify(authorizationToken as string)) {
@@ -43,7 +43,7 @@ export default class TasksController {
     }
 
 
-    public async createTasks({ request, response }: HttpContextContract) {
+    public async createTasks({ request, response }: HttpContextContract): Promise<void> {
         const authorizationToken: string | undefined = request.header('authorization')
 
         if (checkToken.verify(authorizationToken as string)) {
@@ -85,7 +85,7 @@ export default class TasksController {
     }
 
 
-    public async editTasks({ request, response }: HttpContextContract) {
+    public async editTasks({ request, response }: HttpContextContract): Promise<void> {
         const authorizationToken: string | undefined = request.header('authorization')
 
         //extracting own id and email form user token
@@ -142,7 +142,7 @@ export default class TasksController {
     }
 
 
-    public async deleteTasks({ request, response }: HttpContextContract) {
+    public async deleteTasks({ request, response }: HttpContextContract): Promise<void> {
         const authorizationToken: string | undefined = request.header('authorization')
 
         if (checkToken.verify(authorizationToken as string)) {

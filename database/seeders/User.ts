@@ -4,7 +4,7 @@ import { env } from 'process'
 import Hash from '@ioc:Adonis/Core/Hash'
 
 export default class extends BaseSeeder {
-  public async run() {
+  public async run(): Promise<void> {
     // Write your database queries inside the run method
     const hashedPassword: string = await Hash.make(env.ADMIN_PASSWORD as string)
 
