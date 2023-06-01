@@ -47,7 +47,7 @@ export default class AdminsController {
         //add dynamid path for download profilePic
         allUsers.map((user) => {
             const fileName: string = user.$attributes['profile_pic']
-            user.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/profilePic/' + fileName
+            user.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/profilepic/' + fileName
         })
         return response.status(200).send(allUsers)
 
