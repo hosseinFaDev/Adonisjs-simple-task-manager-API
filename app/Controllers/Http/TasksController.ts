@@ -18,6 +18,11 @@ type UserBodyContent = {
     priority?: priorityList,
 
 }
+type UserQueryStringParams = {
+    taskName?: string,
+    page?: string,
+    sort?: "asc" | "desc"
+}
 
 
 export default class TasksController {
@@ -25,16 +30,27 @@ export default class TasksController {
 
     public async getTasks({ request, response }: HttpContextContract): Promise<void> {
         const authorizationToken: string | undefined = request.header('authorization')
+        const queryString: UserQueryStringParams = request.qs()
 
         if (checkToken.verify(authorizationToken as string)) {
             const decodedEmail: string | JwtPayload | null = checkToken.decoded(authorizationToken as string)
             const userData: User | null = await User.findBy('email', decodedEmail)
             const userid: number = userData?.$attributes.id
 
-            //pagination and validation
+            //sorting by desc or asc by query string
+            const sort: "asc" | "desc" = queryString?.sort == "desc" || undefined ? "desc" : "asc"
+
+            //search by task name and pagination 
             const perPage: number = 10
             const page: string = request.qs().page || '1'
-            const allUserTasks: any = await Task.query().where('user_id', userid).paginate(Number(page), perPage)
+            if (queryString.taskName) {
+                const searchedTask: any = await Task.query().where('user_id', userid).where('name', `${queryString.taskName}`).orderBy('created_at',sort).paginate(Number(page), perPage)
+                return response.status(200).send(searchedTask)
+            }
+
+
+
+            const allUserTasks: any = await Task.query().where('user_id', userid).orderBy('created_at',sort).paginate(Number(page), perPage)
 
 
             return response.status(200).send(allUserTasks)
