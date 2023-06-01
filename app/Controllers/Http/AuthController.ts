@@ -3,15 +3,19 @@ import Hash from '@ioc:Adonis/Core/Hash'
 import User from "App/Models/User"
 import token from "App/services/token"
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
-
+type AuthBodyContent = {
+   name?: string,
+   lastName?: string,
+   email?: string,
+   password?: string
+}
 
 export default class AuthController {
    public async register({ request, response }: HttpContextContract) {
-      const { name, lastName, email, password } = request.body()
-      const hashedPassword = await Hash.make(password)
+      const body: AuthBodyContent = request.body()
 
       //validation for inputs data
-      const validateSchema = schema.create({
+      const validateSchema: any = schema.create({
          name: schema.string([
             rules.minLength(3)
          ]),
@@ -28,11 +32,12 @@ export default class AuthController {
 
       })
       await request.validate({ schema: validateSchema })
+      const hashedPassword: string = await Hash.make(body.password as string)
 
       await User.create({
-         name,
-         last_name: lastName,
-         email,
+         name: body.name,
+         last_name: body.lastName,
+         email: body.email,
          password: hashedPassword,
       })
       response.status(201).json({ "message": "your account has been created successfully" })
@@ -40,8 +45,8 @@ export default class AuthController {
    }
 
    public async loggin({ request, response }: HttpContextContract) {
-      const { email, password } = request.body();
-      const validateSchema = schema.create({
+      const body: AuthBodyContent = request.body();
+      const validateSchema: any = schema.create({
          password: schema.string([
             rules.minLength(6)
          ]),
@@ -54,15 +59,15 @@ export default class AuthController {
 
       })
       await request.validate({ schema: validateSchema })
-      const registerEmail = await User.findBy('email', email)
-      const realPassword = registerEmail?.$attributes.password
-      const isValidPassword = await Hash.verify(realPassword, password)
+      const registerEmail: User | null = await User.findBy('email', body.email)
+      const realPassword: string = registerEmail?.$attributes.password
+      const isValidPassword: boolean = await Hash.verify(realPassword, body.password as string)
       if (!isValidPassword) {
          return response.status(401).json({ "message": "invalid password !!!" })
       }
-      const tokenGenrator = new token;
+      const tokenGenrator: token = new token;
 
-      const generated: string = tokenGenrator.sign(email)
+      const generated: string = tokenGenrator.sign(body.email as string)
 
 
       if (generated) {

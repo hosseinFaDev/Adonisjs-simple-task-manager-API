@@ -2,25 +2,25 @@ import * as jsonwebtoken from 'jsonwebtoken'
 import { decode } from 'jsonwebtoken'
 import { env } from 'process'
 
-const privateKey = env.APP_SECRET
+const privateKey: string | undefined = env.APP_SECRET
 export default class token {
 
 
-    public sign(data) {
+    public sign(data: string): string {
         return jsonwebtoken.sign(data, `${privateKey}`)
     }
 
 
-    public decoded(data) {
-        const token = data.split(' ')
-        const pureToken = token[1]
+    public decoded(data: string): string | jsonwebtoken.JwtPayload | null {
+        const token: string[] = data.split(' ')
+        const pureToken: string = token[1]
         return decode(pureToken)
     }
 
 
-    public verify(token) {
+    public verify(token: string): boolean {
         try {
-            const pureToken = token.split(' ')
+            const pureToken: string[] = token.split(' ')
             jsonwebtoken.verify(pureToken[1], `${privateKey}`)
 
             return true

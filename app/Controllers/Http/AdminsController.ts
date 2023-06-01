@@ -2,19 +2,34 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import User from "App/Models/User"
+type AdminBodyContent = {
+    name?: string,
+    lastName?: string,
+    email?: string,
+    password?: string,
+    role?: number
+}
+
+type AdminQueryStringParams = {
+    searchByEmail?: string,
+    page?: string,
+    sort?: "asc" | "desc"
+}
 export default class AdminsController {
 
     public async usersList({ request, response }: HttpContextContract) {
-        const queryString: Record<string, any> = request.qs()
+
+
+        const queryString: AdminQueryStringParams = request.qs()
 
         //search by email you need to use {searchByEmail=} in your query
-        const searchByEmail: string = queryString.searchByEmail
+        const searchByEmail: string | undefined = queryString?.searchByEmail
         if (queryString.searchByEmail) {
-            const allUsers = await User.findBy('email', searchByEmail)
+            const allUsers: User | null = await User.findBy('email', searchByEmail)
 
             // add dynamid path for download profilePic
             if (allUsers) {
-                const fileName = allUsers.$attributes['profile_pic']
+                const fileName: string = allUsers.$attributes['profile_pic']
                 allUsers.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/' + fileName
             }
             return response.status(200).send(allUsers)
@@ -22,16 +37,16 @@ export default class AdminsController {
         }
 
         //sorting by desc or asc by query string
-        const sort: "desc" | "asc" = queryString.sort == "desc" || undefined ? "desc" as "desc" : "asc" as "asc"
+        const sort: "asc" | "desc" = queryString?.sort == "desc" || undefined ? "desc" : "asc"
 
         //pagination
-        const page: any = queryString.page || 1
+        const page: string = (queryString.page) || "1"
         const perPage: number = 3
-        const allUsers = await User.query().where('id', '>', 0).orderBy('id', sort).paginate(page, perPage)
+        const allUsers: any = await User.query().where('id', '>', 0).orderBy('id', sort).paginate(Number(page), perPage)
 
         //add dynamid path for download profilePic
         allUsers.map((user) => {
-            const fileName = user.$attributes['profile_pic']
+            const fileName: string = user.$attributes['profile_pic']
             user.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/' + fileName
         })
         return response.status(200).send(allUsers)
@@ -41,8 +56,9 @@ export default class AdminsController {
 
     //create new account
     public async create({ request, response }: HttpContextContract) {
-        const { name, lastName, email, password } = request.body()
-        const profilePic = request.file('profilePic')
+
+        const body: AdminBodyContent = request.body()
+        const profilePic: any = request.file('profilePic')
 
 
         //Validation in two different ways
@@ -60,7 +76,7 @@ export default class AdminsController {
         //         break;
         // }
 
-        // const repetitive_email = await User.findBy('email', email)
+        // const :string repetitive_email = await User.findBy('email', email)
 
         // if (repetitive_email) {
         //     return response.status(400).json({ "message": "this email has been register brfore"})
@@ -68,7 +84,7 @@ export default class AdminsController {
 
 
         //second one
-        const validateSchema = schema.create({
+        const validateSchema: any = schema.create({
             name: schema.string([
                 rules.minLength(3)
             ]),
@@ -83,7 +99,10 @@ export default class AdminsController {
             profilePic: schema.file({
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
-            })
+            }),
+            role: schema.number([
+                rules.range(0, 1)
+            ])
         })
 
         //upload files and validation
@@ -94,13 +113,14 @@ export default class AdminsController {
         }
 
         await request.validate({ schema: validateSchema })
-        const hashedPassword = await Hash.make(password)
+        const hashedPassword: string = await Hash.make(body.password as string)
         await User.create({
-            name,
-            last_name: lastName,
-            email,
-            password:hashedPassword,
-            profile_pic: fileName
+            name: body.name,
+            last_name: body.lastName,
+            email: body.email,
+            password: hashedPassword,
+            profile_pic: fileName,
+            role: body.role
         })
         response.status(201).json({ "message": "account has been created successfully" })
 
@@ -110,10 +130,11 @@ export default class AdminsController {
 
     // edit account
     public async edit({ request, response }: HttpContextContract) {
-        const { name, lastName, password, email, role = 0 } = request.body()
-        const profilePic = request.file('profilePic')
 
-        const validateSchema = schema.create({
+        const body: AdminBodyContent = request.body()
+        const profilePic: any = request.file('profilePic')
+
+        const validateSchema: any = schema.create({
             name: schema.string([
                 rules.minLength(3)
             ]),
@@ -131,11 +152,14 @@ export default class AdminsController {
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
             }),
+            role: schema.number([
+                rules.range(0, 1)
+            ])
 
         })
         await request.validate({ schema: validateSchema })
-        const selectedAccount = await User.findBy('email', email)
-        const hashedPassword = await Hash.make(password)
+        const selectedAccount: User | null = await User.findBy('email', body.email)
+        const hashedPassword: string = await Hash.make(body.password as string)
 
 
         //upload files and validation
@@ -154,28 +178,29 @@ export default class AdminsController {
             profile_pic: selectedAccount?.$attributes.profile_pic,
             role: selectedAccount?.$attributes.role,
         }, {
-            name,
-            last_name: lastName,
-            email,
-            password:hashedPassword,
+            name: body.name,
+            last_name: body.lastName,
+            email: body.email,
+            password: hashedPassword,
             profile_pic: fileName,
-            role,
+            role: body.role,
         })
         response.status(201).json({ "message": "account info has been edited successfully" })
 
     }
 
     public async delete({ request, response }: HttpContextContract) {
-        const { email } = request.body();
-        const validateSchema = schema.create({
+
+        const body: Record<string, AdminBodyContent> = request.body();
+        const validateSchema: any = schema.create({
             email: schema.string([
                 rules.email()
             ])
         })
         await request.validate({ schema: validateSchema })
-        const findEmail = await User.findBy('email', email)
+        const findEmail: User | null = await User.findBy('email', body.email)
         if (!findEmail) return response.status(404).json({ "message": "user with this email doen't exsist" })
-        await User.query().where('email', email).delete();
+        await User.query().where('email', body.email as string).delete();
         response.status(201).json({ "message": "user has been deleted successfully" })
 
     }
