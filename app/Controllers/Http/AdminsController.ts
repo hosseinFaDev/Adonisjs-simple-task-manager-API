@@ -104,6 +104,7 @@ export default class AdminsController {
                 rules.range(0, 1)
             ])
         })
+        await request.validate({ schema: validateSchema })
 
         //upload files and validation
         let fileName: string | undefined
@@ -112,7 +113,6 @@ export default class AdminsController {
             fileName = profilePic.fileName;
         }
 
-        await request.validate({ schema: validateSchema })
         const hashedPassword: string = await Hash.make(body.password as string)
         await User.create({
             name: body.name,
