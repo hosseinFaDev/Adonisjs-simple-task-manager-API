@@ -2,6 +2,7 @@ import BaseSeeder from '@ioc:Adonis/Lucid/Seeder'
 import User from 'App/Models/User'
 import { env } from 'process'
 import Hash from '@ioc:Adonis/Core/Hash'
+import {accessLevel} from 'App/Controllers/Http/AdminsController'
 
 export default class extends BaseSeeder {
   public async run(): Promise<void> {
@@ -14,7 +15,7 @@ export default class extends BaseSeeder {
         last_name: 'admin',
         email: env.ADMIN_EMAIL,
         password: hashedPassword,
-        role: 1,
+        role: accessLevel.admin,
       })
   }
 }

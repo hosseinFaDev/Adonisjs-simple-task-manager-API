@@ -2,12 +2,17 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import User from "App/Models/User"
+
+export enum accessLevel {
+    user,
+    admin,
+}
 type AdminBodyContent = {
     name?: string,
     lastName?: string,
     email?: string,
     password?: string,
-    role?: number
+    role?: accessLevel
 }
 
 type AdminQueryStringParams = {
@@ -25,14 +30,15 @@ export default class AdminsController {
         //search by email you need to use {searchByEmail=} in your query
         const searchByEmail: string | undefined = queryString?.searchByEmail
         if (queryString.searchByEmail) {
-            const allUsers: User | null = await User.findBy('email', searchByEmail)
+            const selectedUser: User | null = await User.findBy('email', searchByEmail)
 
             // add dynamid path for download profilePic
-            if (allUsers) {
-                const fileName: string = allUsers.$attributes['profile_pic']
-                allUsers.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/' + fileName
+            if (selectedUser) {
+                const fileName: string = selectedUser.$attributes['profile_pic']
+                selectedUser.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/' + fileName
+                selectedUser.$attributes['role'] = accessLevel[selectedUser.$attributes['role']]
             }
-            return response.status(200).send(allUsers)
+            return response.status(200).send(selectedUser)
 
         }
 
@@ -48,6 +54,7 @@ export default class AdminsController {
         allUsers.map((user) => {
             const fileName: string = user.$attributes['profile_pic']
             user.$attributes['profile_pic'] = 'for download profile pic cilck here==>' + '/download/profilepic/' + fileName
+            user.$attributes['role'] = accessLevel[user.$attributes['role']]
         })
         return response.status(200).send(allUsers)
 
@@ -100,9 +107,9 @@ export default class AdminsController {
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
             }),
-            role: schema.number([
-                rules.range(0, 1)
-            ])
+            role: schema.enum((
+                Object.values(accessLevel)
+            )),
         })
         await request.validate({ schema: validateSchema })
 
@@ -114,13 +121,14 @@ export default class AdminsController {
         }
 
         const hashedPassword: string = await Hash.make(body.password as string)
+        const enumToNumber:number = Number[accessLevel[body.role as accessLevel]]
         await User.create({
             name: body.name,
             last_name: body.lastName,
             email: body.email,
             password: hashedPassword,
             profile_pic: fileName,
-            role: body.role
+            role: (typeof enumToNumber === 'number') ? enumToNumber : 0,
         })
         response.status(201).json({ "message": "account has been created successfully" })
 
@@ -152,9 +160,9 @@ export default class AdminsController {
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
             }),
-            role: schema.number([
-                rules.range(0, 1)
-            ])
+            role: schema.enum((
+                Object.values(accessLevel)
+            )),
 
         })
         await request.validate({ schema: validateSchema })
@@ -169,7 +177,7 @@ export default class AdminsController {
             fileName = profilePic.fileName;
         }
 
-
+        const enumToNumber:number = Number[accessLevel[body.role as accessLevel]]
         await User.updateOrCreate({
             name: selectedAccount?.$attributes.name,
             last_name: selectedAccount?.$attributes.last_name,
@@ -183,7 +191,7 @@ export default class AdminsController {
             email: body.email,
             password: hashedPassword,
             profile_pic: fileName,
-            role: body.role,
+            role: (typeof enumToNumber === 'number') ? enumToNumber : 0,
         })
         response.status(201).json({ "message": "account info has been edited successfully" })
 

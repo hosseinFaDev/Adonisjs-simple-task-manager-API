@@ -100,7 +100,7 @@ export default class TasksController {
 
             })
             await request.validate({ schema: validateSchema })
-            const enumToNumber = priorityList[body.priority as priorityList]
+            const enumToNumber :number = Number[priorityList[body.priority as priorityList]]
             //create new record in database
             await Task.create({
                 name: body.name,
@@ -158,7 +158,7 @@ export default class TasksController {
                 return response.status(404).json({ "message": `task with id ${body.id} not been found !!!, recheck task id please` })
             }
 
-            const enumToNumber = priorityList[body.priority as priorityList]
+            const enumToNumber :number = Number[priorityList[body.priority as priorityList]]
             await Task.query().where('id', body.id as number).update({
                 name: body.name,
                 content: body.content,

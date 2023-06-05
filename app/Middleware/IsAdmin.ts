@@ -2,12 +2,9 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 import token from "App/services/token";
 import { JwtPayload } from 'jsonwebtoken'
+import {accessLevel} from 'App/Controllers/Http/AdminsController'
 const checkToken: token = new token;
 
-enum role {
-  user,
-  admin
-}
 
 export default class IsAdmin {
   public async handle(
@@ -20,7 +17,7 @@ export default class IsAdmin {
       const decodedEmail: string | JwtPayload | null = checkToken.decoded(authorizationToken)
       const userData: User | null = await User.findBy('email', decodedEmail)
       const userRole: number = userData?.$attributes.role
-      if (userRole == role.admin) {
+      if (userRole == accessLevel.admin) {
 
         return await next()
       }
