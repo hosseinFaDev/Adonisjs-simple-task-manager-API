@@ -41,5 +41,6 @@ Server.middleware.register([
 |
 */
 Server.middleware.registerNamed({
-  IsAdmin: () => import('App/Middleware/IsAdmin')
+  IsAdmin: () => import('App/Middleware/IsAdmin'),
+  Authorization: () => import('App/Middleware/Authorization')
 })

@@ -41,10 +41,12 @@ Route.group(() => {
   }).middleware('IsAdmin')
 
   //user route
-  Route.get('/users/tasks', 'TasksController.getTasks')
-  Route.post('/users/tasks/create', 'TasksController.createTasks')
-  Route.patch('/users/tasks/edit', 'TasksController.editTasks')
-  Route.delete('/users/tasks', 'TasksController.deleteTasks')
+  Route.group(() => {
+    Route.get('/users/tasks', 'TasksController.getTasks')
+    Route.post('/users/tasks/create', 'TasksController.createTasks')
+    Route.patch('/users/tasks/edit', 'TasksController.editTasks')
+    Route.delete('/users/tasks', 'TasksController.deleteTasks')
+  }).middleware('Authorization')
 
 }).prefix('/apt/v1')
 

@@ -9,14 +9,14 @@ const checkToken: token = new token;
 export default class IsAdmin {
   public async handle(
     { request, response }: HttpContextContract
-    , next: () => Promise<void>): Promise<void> {
+    , next: () => Promise<void>): Promise<void | HttpContextContract> {
 
     const authorizationToken: string | undefined = request.header('authorization')
     if (!authorizationToken) return response.status(403).json({ "message": "access denied! enter your JWT token" })
     if (checkToken.verify(authorizationToken)) {
       const decodedEmail: string | JwtPayload | null = checkToken.decoded(authorizationToken)
       const userData: User | null = await User.findBy('email', decodedEmail)
-      const userRole: number = userData?.$attributes.role
+      const userRole: number = userData?.role as number
       if (userRole == accessLevel.admin) {
 
         return await next()

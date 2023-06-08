@@ -2,7 +2,9 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import User from "App/Models/User"
-import {createDownloadPathforfilePic} from "App/services/createDownloadPath"
+import {createDownloadForProfilePic} from "App/services/createDownloadPath"
+import { uploadFile } from 'App/services/uploadFile'
+import { convertAccessLevel } from 'App/services/convertToString'
 export enum accessLevel {
     user,
     admin,
@@ -16,7 +18,6 @@ export default class AdminsController {
 
     public async usersList({ request, response }: HttpContextContract): Promise<void> {
 
-
         const queryString: AdminQueryStringParams = request.qs()
 
         //search by email you need to use {searchByEmail=} in your query
@@ -24,7 +25,9 @@ export default class AdminsController {
         if (queryString.searchByEmail) {
             const selectedUser: User | null = await User.findBy('email', searchByEmail)
             //add download path for profilePic
-            createDownloadPathforfilePic(selectedUser)
+            createDownloadForProfilePic(selectedUser)
+            //convert users accese to string
+            convertAccessLevel(selectedUser) 
             return response.status(200).send(selectedUser)
         }
 
@@ -37,14 +40,14 @@ export default class AdminsController {
         const allUsers: any = await User.query().where('id', '>', 0).orderBy('id', sort).paginate(Number(page), perPage)
 
         //add dynamid path for download profilePic
-        createDownloadPathforfilePic(allUsers)
+        createDownloadForProfilePic(allUsers)
+        //convert users accese to string
+        convertAccessLevel(allUsers)
         return response.status(200).send(allUsers)
     }
 
     //create new account
     public async create({ request, response }: HttpContextContract): Promise<void> {
-
-        const profilePic: any = request.file('profilePic')
 
         const validateSchema: any = schema.create({
             name: schema.string([
@@ -58,7 +61,7 @@ export default class AdminsController {
                 rules.email(),
                 rules.unique({ table: 'users', column: 'email' }),
             ]),
-            profilePic: schema.file({
+            profilePic: schema.file.optional({
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
             }),
@@ -68,15 +71,10 @@ export default class AdminsController {
         })
         const validatedData = await request.validate({ schema: validateSchema })
 
-        //upload files and validation
-        let fileName: string | undefined
-        if (profilePic) {
-            await profilePic.moveToDisk('./profilePic')
-            fileName = profilePic.fileName;
-        }
-
+        //upload files
+        let fileName: string | undefined = await uploadFile(validatedData.profilePic,'./profilePic')
         const hashedPassword: string = await Hash.make(validatedData.password)
-        const enumToNumber: number = Number[accessLevel[validatedData.role]]
+        const enumToNumber: number = Number(accessLevel[validatedData.role])
         await User.create({
             name: validatedData.name,
             last_name: validatedData.lastName,
@@ -93,8 +91,6 @@ export default class AdminsController {
     // edit account
     public async edit({ request, response }: HttpContextContract): Promise<void> {
 
-        const profilePic: any = request.file('profilePic')
-
         const validateSchema: any = schema.create({
             name: schema.string([
                 rules.minLength(3)
@@ -109,7 +105,7 @@ export default class AdminsController {
                     table: 'users', column: 'email'
                 })
             ]),
-            profilePic: schema.file({
+            profilePic: schema.file.optional({
                 size: '2mb',
                 extnames: ['jpg', 'gif', 'png'],
             }),
@@ -121,28 +117,23 @@ export default class AdminsController {
         const selectedAccount: User | null = await User.findBy('email', validatedData.email)
         const hashedPassword: string = await Hash.make(validatedData.password as string)
 
-        //upload files and validation
-        let fileName: string | undefined
-        if (profilePic) {
-            await profilePic.moveToDisk('./profilePic')
-            fileName = profilePic.fileName;
-        }
-
-        const enumToNumber: number = Number[accessLevel[validatedData.role as accessLevel]]
+        //upload files
+        let fileName: string | undefined = await uploadFile(validatedData.profilePic,'./profilePic')
+        const enumToNumber: number = Number(accessLevel[validatedData.role])
         await User.updateOrCreate({
-            name: selectedAccount?.$attributes.name,
-            last_name: selectedAccount?.$attributes.last_name,
-            email: selectedAccount?.$attributes.email,
-            password: selectedAccount?.$attributes.password,
-            profile_pic: selectedAccount?.$attributes.profile_pic,
-            role: selectedAccount?.$attributes.role,
+            name: selectedAccount?.name,
+            last_name: selectedAccount?.last_name,
+            email: selectedAccount?.email,
+            password: selectedAccount?.password,
+            profile_pic: selectedAccount?.profile_pic,
+            role: selectedAccount?.role,
         }, {
             name: validatedData.name,
             last_name: validatedData.lastName,
             email: validatedData.email,
             password: hashedPassword,
             profile_pic: fileName,
-            role: (typeof enumToNumber === 'number') ? enumToNumber : 0,
+            role: (typeof enumToNumber === 'number') ? enumToNumber : 1,
         })
         response.status(201).json({ "message": "account info has been edited successfully" })
 
