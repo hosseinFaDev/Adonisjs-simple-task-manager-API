@@ -4,19 +4,14 @@ import Task from "App/Models/Task";
 import User from "App/Models/User";
 import token from "App/services/token";
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
+import {createDownloadPathTaskFile} from "App/services/createDownloadPath"
 
 const checkToken: token = new token;
-enum priorityList {
+
+export enum priorityList {
     low,
     medium,
     high,
-}
-type UserBodyContent = {
-    id?: number,
-    name?: string,
-    content?: string,
-    priority?: priorityList,
-
 }
 type UserQueryStringParams = {
     taskName?: string,
@@ -46,24 +41,14 @@ export default class TasksController {
             if (queryString.taskName) {
                 const searchedTask: any = await Task.query().where('user_id', userid).where('name', `${queryString.taskName}`).orderBy('created_at', sort).paginate(Number(page), perPage)
                 //add dynamid path for download task files the //==> other way is create a functin for do this and stop repetitive code
-                searchedTask.map((task) => {
-                    const fileName: string = task.$attributes['task_files']
-                    const priorityNumber: number = task.$attributes['priority']
-                    task.$attributes['priority'] = priorityList[priorityNumber]
-                    task.$attributes['task_files'] = 'for download task files cilck here==>' + '/download/taskfiles/' + fileName
-                })
+                createDownloadPathTaskFile(searchedTask)
                 return response.status(200).send(searchedTask)
             }
 
             const allUserTasks: any = await Task.query().where('user_id', userid).orderBy('created_at', sort).paginate(Number(page), perPage)
 
             //add dynamid path for download task files
-            allUserTasks.map((task) => {
-                const fileName: string = task.$attributes['task_files']
-                const priorityNumber: number = task.$attributes['priority']
-                task.$attributes['priority'] = priorityList[priorityNumber]
-                task.$attributes['task_files'] = 'for download task files cilck here==>' + '/download/taskfiles/' + fileName
-            })
+            createDownloadPathTaskFile(allUserTasks)
             return response.status(200).send(allUserTasks)
 
 
@@ -80,7 +65,6 @@ export default class TasksController {
             const decodedEmail: string | JwtPayload | null = checkToken.decoded(authorizationToken as string)
             const userData: User | null = await User.findBy('email', decodedEmail)
             const userid: number = userData?.$attributes.id
-            const body: UserBodyContent = request.body()
 
             //upload files
             const taskFiles: any = request.file('taskFiles')
@@ -99,12 +83,12 @@ export default class TasksController {
                 ),
 
             })
-            await request.validate({ schema: validateSchema })
-            const enumToNumber :number = Number[priorityList[body.priority as priorityList]]
+            const validatedData = await request.validate({ schema: validateSchema })
+            const enumToNumber: number = Number[priorityList[validatedData.priority as priorityList]]
             //create new record in database
             await Task.create({
-                name: body.name,
-                content: body.content,
+                name: validatedData.name,
+                content: validatedData.content,
                 priority: (typeof enumToNumber === 'number') ? enumToNumber : 0,
                 task_files: fileName,
                 user_id: userid,
@@ -120,7 +104,6 @@ export default class TasksController {
 
         //extracting own id and email form user token
         if (checkToken.verify(authorizationToken as string)) {
-            const body: UserBodyContent = request.body()
             const decodedEmail: string | JwtPayload | null = checkToken.decoded(authorizationToken as string)
             const userData: User | null = await User.findBy('email', decodedEmail)
             const userid: number = userData?.$attributes.id
@@ -135,7 +118,13 @@ export default class TasksController {
 
             //validation for inputs data
             const validateSchema: any = schema.create({
-                id: schema.number(),
+                id: schema.number([
+                    rules.exists({
+                        table: 'tasks', column: 'id', where: {
+                            user_id: userid,
+                        },
+                    })
+                ]),
                 name: schema.string([
                     rules.minLength(3)
                 ]),
@@ -144,24 +133,12 @@ export default class TasksController {
                 ),
 
             })
-            await request.validate({ schema: validateSchema })
+            const validatedData = await request.validate({ schema: validateSchema })
 
-
-            //validation for changing own tasks with userId
-            const correntCommentUser: Task[] = await Task.query().where('id', body.id as number)
-            try {
-                const correntCommentUserId: number = correntCommentUser[0].$attributes.user_id
-                if (!(userid == correntCommentUserId)) {
-                    return response.status(403).json({ "message": `task with id ${body.id} is not your task, recheck task id please` })
-                }
-            } catch {
-                return response.status(404).json({ "message": `task with id ${body.id} not been found !!!, recheck task id please` })
-            }
-
-            const enumToNumber :number = Number[priorityList[body.priority as priorityList]]
-            await Task.query().where('id', body.id as number).update({
-                name: body.name,
-                content: body.content,
+            const enumToNumber: number = Number[priorityList[validatedData.priority as priorityList]]
+            await Task.query().where('id', validatedData.id as number).update({
+                name: validatedData.name,
+                content: validatedData.content,
                 priority: (typeof enumToNumber === 'number') ? enumToNumber : 0,
                 task_files: fileName,
             })
@@ -174,27 +151,24 @@ export default class TasksController {
 
     public async deleteTasks({ request, response }: HttpContextContract): Promise<void> {
         const authorizationToken: string | undefined = request.header('authorization')
+        //validation for inputs data
 
         if (checkToken.verify(authorizationToken as string)) {
-            const body: UserBodyContent = request.body()
-            if (!body.id) return response.status(400).json({ "message": "fill task id please and try again" })
             const decodedEmail: string | JwtPayload | null = checkToken.decoded(authorizationToken as string)
             const userData: User | null = await User.findBy('email', decodedEmail)
             const userid: number = userData?.$attributes.id
+            const validateSchema = schema.create({
+                id: schema.number([
+                    rules.exists({
+                        table: 'tasks', column: 'id', where: {
+                            user_id: userid,
+                        },
+                    })
+                ])
+            })
+            const validatedData = await request.validate({ schema: validateSchema })
 
-
-            //validation for deleting own tasks
-            const correntCommentUser: Task[] = await Task.query().where('id', body.id)
-            try {
-                const correntCommentUserId: number = correntCommentUser[0].$attributes.user_id
-                if (!(userid == correntCommentUserId)) {
-                    return response.status(403).json({ "message": `task with id ${body.id} is not your task, recheck task id please` })
-                }
-            } catch {
-                return response.status(404).json({ "message": `task with id ${body.id} not been found !!! recheck task id please` })
-            }
-
-            await Task.query().where('id', body.id).delete()
+            await Task.query().where('id', validatedData.id).delete()
             return response.status(201).json({ "message": "task deleted successfully" })
 
         }
