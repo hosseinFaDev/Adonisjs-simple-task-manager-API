@@ -41,7 +41,7 @@ export default class TasksController {
         //add dynamid path for download task files
         createDownloadPathForTaskFiles(allUserTasks)
         convertPriorityList(allUserTasks)
-        return response.status(200).send(allUserTasks)
+        response.status(200).send(allUserTasks)
     }
 
 
@@ -75,7 +75,7 @@ export default class TasksController {
             task_files: taskFileName,
             user_id: userid,
         })
-        return response.status(201).json({ "message": "task created successfully" })
+        response.status(201).json({ "message": "task created successfully" })
     }
 
 
@@ -123,7 +123,7 @@ export default class TasksController {
             priority: (typeof enumToNumber === 'number') ? enumToNumber : 0,
         })
 
-        return response.status(201).json({ "message": "task edited successfully" })
+        response.status(201).json({ "message": "task edited successfully" })
     }
 
 
@@ -141,7 +141,7 @@ export default class TasksController {
         })
         const validatedData = await request.validate({ schema: validateSchema })
         await Task.query().where('id', validatedData.id).delete()
-        return response.status(201).json({ "message": "task deleted successfully" })
+        response.status(201).json({ "message": "task deleted successfully" })
     }
 
 }

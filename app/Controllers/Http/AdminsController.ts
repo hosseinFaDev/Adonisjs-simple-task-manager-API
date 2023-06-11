@@ -2,7 +2,7 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import User from "App/Models/User"
-import {createDownloadForProfilePic} from "App/services/createDownloadPath"
+import { createDownloadForProfilePic } from "App/services/createDownloadPath"
 import { uploadFile } from 'App/services/uploadFile'
 import { convertAccessLevel } from 'App/services/convertToString'
 export enum accessLevel {
@@ -27,7 +27,7 @@ export default class AdminsController {
             //add download path for profilePic
             createDownloadForProfilePic(selectedUser)
             //convert users accese to string
-            convertAccessLevel(selectedUser) 
+            convertAccessLevel(selectedUser)
             return response.status(200).send(selectedUser)
         }
 
@@ -43,7 +43,7 @@ export default class AdminsController {
         createDownloadForProfilePic(allUsers)
         //convert users accese to string
         convertAccessLevel(allUsers)
-        return response.status(200).send(allUsers)
+        response.status(200).send(allUsers)
     }
 
     //create new account
@@ -72,7 +72,7 @@ export default class AdminsController {
         const validatedData = await request.validate({ schema: validateSchema })
 
         //upload files
-        let fileName: string | undefined = await uploadFile(validatedData.profilePic,'./profilePic')
+        let fileName: string | undefined = await uploadFile(validatedData.profilePic, './profilePic')
         const hashedPassword: string = await Hash.make(validatedData.password)
         const enumToNumber: number = Number(accessLevel[validatedData.role])
         await User.create({
@@ -118,7 +118,7 @@ export default class AdminsController {
         const hashedPassword: string = await Hash.make(validatedData.password as string)
 
         //upload files
-        let fileName: string | undefined = await uploadFile(validatedData.profilePic,'./profilePic')
+        let fileName: string | undefined = await uploadFile(validatedData.profilePic, './profilePic')
         const enumToNumber: number = Number(accessLevel[validatedData.role])
         await User.updateOrCreate({
             name: selectedAccount?.name,
