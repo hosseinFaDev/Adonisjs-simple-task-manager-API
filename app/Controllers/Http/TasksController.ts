@@ -5,6 +5,7 @@ import { createDownloadPathForTaskFiles } from "App/services/createDownloadPath"
 import { extractUserId } from 'App/services/extractUserId'
 import { uploadFile } from 'App/services/uploadFile'
 import { convertPriorityList } from 'App/services/convertToString';
+import { ModelPaginatorContract } from '@ioc:Adonis/Lucid/Orm';
 
 export enum priorityList {
     low,
@@ -31,12 +32,12 @@ export default class TasksController {
         const perPage: number = 10
         const page: string = request.qs().page || '1'
         if (queryString.taskName) {
-            const searchedTask: any = await Task.query().where('user_id', userid).where('name', `${queryString.taskName}`).orderBy('created_at', sort).paginate(Number(page), perPage)
+            const searchedTask: ModelPaginatorContract<Task> = await Task.query().where('user_id', userid).where('name', `${queryString.taskName}`).orderBy('created_at', sort).paginate(Number(page), perPage)
             createDownloadPathForTaskFiles(searchedTask)
             convertPriorityList(searchedTask)
             return response.status(200).send(searchedTask)
         }
-        const allUserTasks: any = await Task.query().where('user_id', userid).orderBy('created_at', sort).paginate(Number(page), perPage)
+        const allUserTasks: ModelPaginatorContract<Task> = await Task.query().where('user_id', userid).orderBy('created_at', sort).paginate(Number(page), perPage)
 
         //add dynamid path for download task files
         createDownloadPathForTaskFiles(allUserTasks)

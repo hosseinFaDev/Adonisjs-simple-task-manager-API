@@ -25,9 +25,11 @@ export default class AdminsController {
         if (queryString.searchByEmail) {
             const selectedUser: User | null = await User.findBy('email', searchByEmail)
             //add download path for profilePic
-            createDownloadForProfilePic(selectedUser)
-            //convert users accese to string
-            convertAccessLevel(selectedUser)
+            if (selectedUser !== null) {
+                createDownloadForProfilePic([selectedUser])
+                //convert users accese to string
+                convertAccessLevel([selectedUser])
+            }
             return response.status(200).send(selectedUser)
         }
 
