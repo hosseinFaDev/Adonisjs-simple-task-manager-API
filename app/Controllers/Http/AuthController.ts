@@ -63,8 +63,7 @@ export default class AuthController {
       if (!isValidPassword) {
          return response.status(401).json({ "message": "invalid password !!!" })
       }
-      const tokenGenrator: token = new token;
-      const generated: string = tokenGenrator.sign(validatedData.email as string)
+      const generated: string = token.sign(validatedData.email as string)
       if (generated) {
          return response.status(201).json({ "message": `this is your token ,please set it on your authorization header : bearer ${generated}` })
       }
